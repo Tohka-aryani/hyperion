@@ -3,13 +3,16 @@ import { createPortal } from 'react-dom'
 import StocksWindow from './StocksWindow'
 import TvFloatingWindow from './TvFloatingWindow'
 import PredictionsWindow from './PredictionsWindow'
+import SocmedWindow from './SocmedWindow'
 
 export default function SidebarLeft() {
   const [stocksOpen, setStocksOpen] = useState(false)
   const [tvOpen, setTvOpen] = useState(false)
   const [predictionsOpen, setPredictionsOpen] = useState(false)
+  const [socmedOpen, setSocmedOpen] = useState(false)
   const stocksPanelRef = useRef(null)
   const predictionsPanelRef = useRef(null)
+  const socmedPanelRef = useRef(null)
 
   useEffect(() => {
     if (!stocksOpen) return
@@ -54,6 +57,23 @@ export default function SidebarLeft() {
     }
   }, [predictionsOpen])
 
+  useEffect(() => {
+    if (!socmedOpen) return
+    const onPointerDown = (e) => {
+      if (socmedPanelRef.current?.contains(e.target)) return
+      setSocmedOpen(false)
+    }
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setSocmedOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [socmedOpen])
+
   const stocksPortal = stocksOpen && createPortal(
     <div className="stocks-overlay" role="presentation">
       <div ref={stocksPanelRef} className="stocks-window-wrap">
@@ -77,6 +97,15 @@ export default function SidebarLeft() {
     <div className="predictions-overlay" role="presentation">
       <div ref={predictionsPanelRef} className="predictions-window-wrap">
         <PredictionsWindow onClose={() => setPredictionsOpen(false)} />
+      </div>
+    </div>,
+    document.body
+  )
+
+  const socmedPortal = socmedOpen && createPortal(
+    <div className="socmed-overlay" role="presentation">
+      <div ref={socmedPanelRef} className="socmed-window-wrap">
+        <SocmedWindow onClose={() => setSocmedOpen(false)} />
       </div>
     </div>,
     document.body
@@ -130,6 +159,18 @@ export default function SidebarLeft() {
           <circle cx="18" cy="6" r="2.5" />
         </svg>
       </button>
+      <button
+        type="button"
+        className="icon-btn"
+        title="SOCMED"
+        aria-label="Social media"
+        aria-expanded={socmedOpen}
+        onClick={() => setSocmedOpen(true)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+        </svg>
+      </button>
       <button type="button" className="icon-btn" title="Grid" aria-label="Grid">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="7" height="7" />
@@ -146,6 +187,7 @@ export default function SidebarLeft() {
       {stocksPortal}
       {tvPortal}
       {predictionsPortal}
+      {socmedPortal}
     </aside>
   )
 }
