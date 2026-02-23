@@ -4,12 +4,14 @@ import StocksWindow from './StocksWindow'
 import TvFloatingWindow from './TvFloatingWindow'
 import PredictionsWindow from './PredictionsWindow'
 import SocmedWindow from './SocmedWindow'
+import DefconWindow from './DefconWindow'
 
 export default function SidebarLeft() {
   const [stocksOpen, setStocksOpen] = useState(false)
   const [tvOpen, setTvOpen] = useState(false)
   const [predictionsOpen, setPredictionsOpen] = useState(false)
   const [socmedOpen, setSocmedOpen] = useState(false)
+  const [defconOpen, setDefconOpen] = useState(false)
   const stocksPanelRef = useRef(null)
   const predictionsPanelRef = useRef(null)
   const socmedPanelRef = useRef(null)
@@ -111,6 +113,11 @@ export default function SidebarLeft() {
     document.body
   )
 
+  const defconPortal = defconOpen && createPortal(
+    <DefconWindow onClose={() => setDefconOpen(false)} />,
+    document.body
+  )
+
   return (
     <aside className="sidebar sidebar-left">
       <button type="button" className="icon-btn" title="Search" aria-label="Search">
@@ -171,6 +178,18 @@ export default function SidebarLeft() {
           <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
         </svg>
       </button>
+      <button
+        type="button"
+        className="icon-btn"
+        title="DEFCON"
+        aria-label="DEFCON status"
+        aria-expanded={defconOpen}
+        onClick={() => setDefconOpen(true)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </button>
       <button type="button" className="icon-btn" title="Grid" aria-label="Grid">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="7" height="7" />
@@ -188,6 +207,7 @@ export default function SidebarLeft() {
       {tvPortal}
       {predictionsPortal}
       {socmedPortal}
+      {defconPortal}
     </aside>
   )
 }
