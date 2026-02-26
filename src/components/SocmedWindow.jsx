@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchCombinedSocmedFeed } from '../api/socmedFeedData'
+import { TELEGRAM_CHANNELS, getTelegramChannelUrl, getTelegramAppUrl, fetchCombinedTelegramFeed } from '../api/telegramFeedData'
 
 const TWITTER_ACCOUNTS = [
   { username: 'USAToday', label: 'USA Today' },
@@ -161,9 +162,56 @@ function TweetCard({ item }) {
   )
 }
 
+const TELEGRAM_ICON_PATH = 'M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z'
+
+function TelegramCard({ item }) {
+  const [expanded, setExpanded] = useState(false)
+  const content = (item.content || item.title || '').trim() || '—'
+  const TRUNCATE_LEN = 320
+  const isLong = content.length > TRUNCATE_LEN
+  const displayContent = isLong && !expanded ? content.slice(0, TRUNCATE_LEN) : content
+  const channelDisplay = item.channelName || item.channelUsername
+  return (
+    <article className="socmed-card socmed-card-telegram">
+      <div className="socmed-card-inner">
+        <a href={item.link || getTelegramChannelUrl(item.channelUsername)} target="_blank" rel="noopener noreferrer" className="socmed-card-header-link">
+          <div className="socmed-card-header socmed-card-header-telegram">
+            <div className="socmed-card-telegram-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d={TELEGRAM_ICON_PATH} /></svg>
+            </div>
+            <div className="socmed-card-meta">
+              <span className="socmed-card-name">{channelDisplay}</span>
+              <span className="socmed-card-time-sep" aria-hidden="true"> • </span>
+              <span className="socmed-card-time">{item.timeAgo}</span>
+            </div>
+          </div>
+        </a>
+        <div className="socmed-card-labels">
+          <span className="socmed-card-badge socmed-badge-telegram">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="10" height="10" aria-hidden="true"><path d={TELEGRAM_ICON_PATH} /></svg>
+            TELEGRAM
+          </span>
+          <span className="socmed-card-badge socmed-badge-severity">{item.severityLabel}</span>
+        </div>
+        <div className="socmed-card-body">
+          <div className="socmed-card-content socmed-card-content-telegram">{displayContent}</div>
+          {isLong && (
+            <button type="button" className="socmed-card-expand" onClick={(e) => { e.preventDefault(); setExpanded((x) => !x) }}>
+              {expanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export default function SocmedWindow({ onClose }) {
   const [activeTab, setActiveTab] = useState('twitter')
   const [feedItems, setFeedItems] = useState([])
+  const [telegramItems, setTelegramItems] = useState([])
+  const [telegramLoading, setTelegramLoading] = useState(false)
+  const [telegramError, setTelegramError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [scriptLoaded, setScriptLoaded] = useState(false)
   const embedRef = useRef(null)
@@ -176,6 +224,25 @@ export default function SocmedWindow({ onClose }) {
       .catch(() => setFeedItems([]))
       .finally(() => setLoading(false))
   }, [])
+
+  const loadTelegramFeed = useCallback(() => {
+    setTelegramError(null)
+    setTelegramLoading(true)
+    fetchCombinedTelegramFeed()
+      .then((items) => {
+        setTelegramItems(items || [])
+        if (!items?.length) setTelegramError('No posts loaded. Open the channel in your browser or Telegram app below.')
+      })
+      .catch(() => {
+        setTelegramItems([])
+        setTelegramError('Feed unavailable. Open the channel in your browser or Telegram app below.')
+      })
+      .finally(() => setTelegramLoading(false))
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'telegram') loadTelegramFeed()
+  }, [activeTab, loadTelegramFeed])
 
   useEffect(() => {
     if (!showEmbedFallback) return
@@ -282,32 +349,36 @@ export default function SocmedWindow({ onClose }) {
 
         {activeTab === 'telegram' && (
           <div className="socmed-telegram">
-            <div className="socmed-telegram-header">
-              <p className="socmed-telegram-desc">Preview Telegram channels in the browser. Open a channel below to view recent posts.</p>
-            </div>
-            <div className="socmed-telegram-channels">
-              <a href="https://t.me/s/durov" target="_blank" rel="noopener noreferrer" className="socmed-telegram-channel">
-                <span className="socmed-telegram-channel-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                  </svg>
-                </span>
-                <span>Durov (Telegram)</span>
-              </a>
-              <a href="https://t.me/s/telegram" target="_blank" rel="noopener noreferrer" className="socmed-telegram-channel">
-                <span className="socmed-telegram-channel-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                  </svg>
-                </span>
-                <span>Telegram</span>
-              </a>
-            </div>
-            <iframe
-              title="Telegram channel preview"
-              src="https://t.me/s/durov?embed=1"
-              className="socmed-telegram-iframe"
-            />
+            {telegramLoading && <div className="socmed-loading">Loading Telegram…</div>}
+            {!telegramLoading && telegramItems.length > 0 && (
+              <div className="socmed-feed-list">
+                {telegramItems.map((item) => (
+                  <TelegramCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+            {!telegramLoading && telegramItems.length === 0 && (
+              <div className="socmed-telegram-header">
+                {telegramError && <p className="socmed-telegram-desc socmed-telegram-error">{telegramError}</p>}
+                <button type="button" className="socmed-telegram-retry" onClick={loadTelegramFeed}>
+                  Retry load feed
+                </button>
+                <p className="socmed-telegram-desc">Or open the channel directly:</p>
+                <div className="socmed-telegram-channels">
+                  {TELEGRAM_CHANNELS.map(({ username, label }) => (
+                    <div key={username} className="socmed-telegram-channel-row">
+                      <span className="socmed-telegram-channel-label">{label}</span>
+                      <a href={getTelegramChannelUrl(username)} target="_blank" rel="noopener noreferrer" className="socmed-telegram-channel">
+                        Open in browser
+                      </a>
+                      <a href={getTelegramAppUrl(username)} target="_blank" rel="noopener noreferrer" className="socmed-telegram-channel">
+                        Open in Telegram app
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { useState, lazy, Suspense } from 'react'
 import { MapProvider } from './context/MapContext'
+import { WallMapProvider } from './context/WallMapContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { SettingsProvider } from './context/SettingsContext'
 import Header from './components/Header'
@@ -9,6 +10,8 @@ import Footer from './components/Footer'
 
 const WorldMap = lazy(() => import('./components/WorldMap').then(m => ({ default: m.default })))
 const CoordsBox = lazy(() => import('./components/WorldMap').then(m => ({ default: m.CoordsBox })))
+const WallArticleDetailWindow = lazy(() => import('./components/WallArticleDetailWindow').then(m => ({ default: m.default })))
+const MapLegend = lazy(() => import('./components/MapLegend').then(m => ({ default: m.default })))
 const TheWall = lazy(() => import('./components/TheWall').then(m => ({ default: m.default })))
 
 export default function App() {
@@ -23,10 +26,14 @@ export default function App() {
         <SidebarLeft />
         <main className="main">
           {view === 'map' ? (
-            <Suspense fallback={<MapLoading />}>
-              <WorldMap />
-              <CoordsBox />
-            </Suspense>
+            <WallMapProvider>
+              <Suspense fallback={<MapLoading />}>
+                <WorldMap />
+                <CoordsBox />
+                <WallArticleDetailWindow />
+                <MapLegend />
+              </Suspense>
+            </WallMapProvider>
           ) : (
             <Suspense fallback={<WallLoading />}>
               <TheWall />

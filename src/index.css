@@ -1,4 +1,4 @@
-/* WORLD MONITOR — OSINT-style dashboard */
+/* Hyperion — OSINT-style dashboard */
 
 :root,
 [data-theme="dark"] {
@@ -235,6 +235,386 @@ html, body, #root {
 .marker-circle.green { background: var(--marker-green); }
 .marker-circle.yellow { background: var(--marker-yellow); }
 .marker-circle.orange { background: var(--marker-orange); }
+.marker-circle.lime { background: #84cc16; }
+.marker-circle.red { background: #dc2626; }
+.wall-marker-wrap { background: transparent !important; border: none !important; }
+.marker-circle.wall-marker { box-shadow: 0 0 12px currentColor; }
+
+/* Map legend – above ticker, beside left sidebar */
+.map-legend {
+  position: fixed;
+  left: 60px;
+  bottom: 44px;
+  z-index: 1000;
+  width: 220px;
+  background: var(--bg-panel);
+  border: 1px solid var(--grid);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.map-legend-main-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0 10px;
+  margin-bottom: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--grid);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-mono);
+}
+
+.map-legend-main-heading:hover {
+  color: var(--accent);
+}
+
+.map-legend:not(:has(.map-legend-section)) .map-legend-main-heading {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.map-legend-section {
+  border-bottom: 1px solid var(--grid);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.map-legend-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.map-legend-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-align: left;
+}
+
+.map-legend-heading:hover {
+  color: var(--accent);
+}
+
+.map-legend-chevron {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.map-legend-overlays {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.map-legend-overlay-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid var(--grid);
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-legend-overlay-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.map-legend-overlay-btn.active {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.map-legend-overlay-btn.active:nth-child(2) {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+
+.map-legend-overlay-icon {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.map-legend-categories {
+  list-style: none;
+  margin: 8px 0 0 0;
+  padding: 0;
+}
+
+.map-legend-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.map-legend-cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.map-legend-cat-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.map-legend-cat-count {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.map-legend-severity {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.map-legend-sev-btn {
+  flex: 1;
+  min-width: 32px;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0d1117;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.map-legend-sev-btn.active {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.map-legend-options .map-legend-chevron {
+  margin-left: auto;
+}
+
+.map-legend-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--grid);
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.map-legend-footer a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.map-legend-footer a:hover {
+  color: var(--text);
+}
+
+/* Wall article detail window (map popup – sizable, alongside map) */
+.wall-detail-wrap {
+  position: fixed;
+  z-index: 10002;
+  pointer-events: auto;
+  min-width: 320px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.wall-detail-resize-r {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  z-index: 2;
+}
+.wall-detail-resize-b {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+  z-index: 2;
+}
+.wall-detail-resize-br {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  z-index: 2;
+}
+
+.wall-detail-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--grid);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+[data-theme="light"] .wall-detail-panel {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.wall-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--grid);
+  cursor: move;
+  user-select: none;
+}
+
+.wall-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wall-detail-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+}
+
+.wall-detail-category {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.wall-detail-severity {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.wall-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wall-detail-translate {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+  color: #22c55e;
+  background: transparent;
+  border: 1px solid #22c55e;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.wall-detail-translate:hover {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.wall-detail-mentions {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.wall-detail-close {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #22c55e;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wall-detail-close:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.wall-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+.wall-detail-location {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+
+.wall-detail-headline {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+  margin: 0 0 10px 0;
+  font-family: var(--font-mono);
+  text-decoration: none;
+}
+
+.wall-detail-headline:hover {
+  text-decoration: underline;
+}
+
+.wall-detail-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0;
+  font-family: var(--font-mono);
+}
 
 /* Settings overlay (portal) – ensures window pops on top */
 .settings-overlay {
@@ -1803,6 +2183,82 @@ html, body, #root {
   margin-top: 10px;
 }
 
+/* Telegram card – reference layout: circular blue icon, channel • time, TELEGRAM + severity pills */
+.socmed-card-telegram .socmed-card-header-telegram {
+  margin-bottom: 10px;
+}
+
+.socmed-card-telegram .socmed-card-telegram-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #0088cc;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.socmed-card-telegram .socmed-card-time-sep {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin: 0 4px;
+}
+
+.socmed-card-telegram .socmed-card-time {
+  margin-left: 0;
+}
+
+.socmed-card-telegram .socmed-card-labels {
+  margin-bottom: 10px;
+}
+
+.socmed-badge-telegram {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 136, 204, 0.25);
+  color: #fff;
+  border: 1px solid #2A9FD6;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.socmed-badge-severity {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border: 1px solid var(--grid);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.socmed-card-telegram .socmed-card-content-telegram {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.socmed-card-expand {
+  margin-top: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.socmed-card-expand:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* Telegram tab */
 .socmed-telegram {
   display: flex;
@@ -1821,6 +2277,30 @@ html, body, #root {
   color: var(--text-muted);
   margin: 0;
   font-family: var(--font-mono);
+}
+
+.socmed-telegram-desc.socmed-telegram-error {
+  color: #f87171;
+  margin-bottom: 10px;
+}
+
+.socmed-telegram-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--grid);
+  border: 1px solid var(--text-muted);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.socmed-telegram-retry:hover {
+  background: rgba(126, 231, 135, 0.1);
 }
 
 .socmed-telegram-channels {
@@ -1844,6 +2324,25 @@ html, body, #root {
 
 .socmed-telegram-channel:hover {
   background: rgba(0, 136, 204, 0.15);
+}
+
+.socmed-telegram-channel.active {
+  background: rgba(0, 136, 204, 0.2);
+  border: 1px solid #0088cc;
+}
+
+.socmed-telegram-channel-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.socmed-telegram-channel-label {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 120px;
 }
 
 .socmed-telegram-channel-icon {

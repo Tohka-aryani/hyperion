@@ -3,7 +3,12 @@ import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from '
 import L from 'leaflet'
 import { useMapContext } from '../context/MapContext'
 import { useTheme } from '../context/ThemeContext'
-import { MARKERS, markerColor, markerRadius } from '../data/markers'
+import { useWallMap } from '../context/WallMapContext'
+import { SEVERITY_COLORS } from '../data/wallMapConfig'
+
+function markerColorHex(severity) {
+  return SEVERITY_COLORS[severity] || SEVERITY_COLORS.T1
+}
 
 const TILE_URL_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 const TILE_URL_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -41,27 +46,6 @@ function CoordsListener() {
   return null
 }
 
-function NumberedMarker({ point }) {
-  const color = markerColor(point.value)
-  const r = markerRadius(point.value)
-  const icon = useMemo(() => {
-    return L.divIcon({
-      html: `<div class="marker-circle ${color}" style="width:${r * 2}px;height:${r * 2}px">${point.value}</div>`,
-      className: '',
-      iconSize: [r * 2, r * 2],
-      iconAnchor: [r, r],
-    })
-  }, [point.value, color, r])
-
-  return (
-    <Marker position={[point.lat, point.lng]} icon={icon}>
-      <Tooltip permanent={false} direction="top" className="marker-tooltip">
-        {point.value}
-      </Tooltip>
-    </Marker>
-  )
-}
-
 function ThemeTileLayer() {
   const { theme } = useTheme()
   const url = theme === 'light' ? TILE_URL_LIGHT : TILE_URL_DARK
@@ -76,6 +60,37 @@ function ThemeTileLayer() {
   )
 }
 
+function WallNewsMarkers() {
+  const { wallItems, setSelectedItem, filterSeverity } = useWallMap()
+  const filtered = filterSeverity ? wallItems.filter((i) => i.severity === filterSeverity) : wallItems
+  return (
+    <>
+      {filtered.map((item) => (
+        <WallNewsMarker key={item.id} item={item} onClick={() => setSelectedItem(item)} />
+      ))}
+    </>
+  )
+}
+
+function WallNewsMarker({ item, onClick }) {
+  const colorHex = markerColorHex(item.severity)
+  const icon = useMemo(() => {
+    return L.divIcon({
+      html: `<div class="marker-circle wall-marker" style="width:24px;height:24px;cursor:pointer;background:${colorHex}"></div>`,
+      className: 'wall-marker-wrap',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    })
+  }, [colorHex])
+  return (
+    <Marker position={[item.lat, item.lng]} icon={icon} eventHandlers={{ click: onClick }}>
+      <Tooltip permanent={false} direction="top" className="marker-tooltip">
+        {item.title?.slice(0, 50)}…
+      </Tooltip>
+    </Marker>
+  )
+}
+
 export default function WorldMap() {
   return (
     <MapContainer
@@ -87,9 +102,7 @@ export default function WorldMap() {
     >
       <MapReady />
       <ThemeTileLayer />
-      {MARKERS.map((point, i) => (
-        <NumberedMarker key={`${point.lat}-${point.lng}-${i}`} point={point} />
-      ))}
+      <WallNewsMarkers />
       <CoordsListener />
     </MapContainer>
   )
