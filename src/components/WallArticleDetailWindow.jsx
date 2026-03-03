@@ -117,6 +117,10 @@ export default function WallArticleDetailWindow() {
     setResizeStart({ x: e.clientX, y: e.clientY, w: size.w, h: size.h })
   }, [size.w, size.h])
 
+  const translateUrl = selectedItem?.link
+    ? `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(selectedItem.link)}`
+    : null
+
   const mentionCount = selectedItem && wallItems
     ? wallItems.filter((i) => i.locationName === selectedItem.locationName).length
     : 0
@@ -145,7 +149,14 @@ export default function WallArticleDetailWindow() {
             <span className="wall-detail-badge wall-detail-severity">{selectedItem.severityLabel || selectedItem.severity}</span>
           </div>
           <div className="wall-detail-actions">
-            <button type="button" className="wall-detail-translate">TRANSLATE</button>
+            <button
+              type="button"
+              className="wall-detail-translate"
+              onClick={() => translateUrl && window.open(translateUrl, '_blank', 'noopener,noreferrer')}
+              title="Open article in Google Translate (to English)"
+            >
+              TRANSLATE
+            </button>
             <span className="wall-detail-mentions">{mentionCount} mention{mentionCount !== 1 ? 's' : ''}</span>
             <button
               type="button"

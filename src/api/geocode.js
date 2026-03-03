@@ -5,6 +5,7 @@
  */
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse'
 const RATE_LIMIT_MS = 1100
 
 let lastRequestTime = 0
@@ -80,4 +81,39 @@ export async function geocodeFromArticleText(text) {
   const place = extractPlaceFromText(text)
   if (!place) return null
   return geocodePlace(place)
+}
+
+/**
+ * Reverse geocode lat/lng to get country. Returns { name, code, lat, lng } or null.
+ * Respects Nominatim rate limit.
+ */
+export async function reverseGeocode(lat, lng) {
+  if (typeof lat !== 'number' || typeof lng !== 'number') return null
+  const now = Date.now()
+  const wait = Math.max(0, RATE_LIMIT_MS - (now - lastRequestTime))
+  if (wait > 0) await delay(wait)
+  lastRequestTime = Date.now()
+  try {
+    const params = new URLSearchParams({
+      lat: String(lat),
+      lon: String(lng),
+      format: 'json',
+    })
+    const res = await fetch(`${NOMINATIM_REVERSE_URL}?${params}`, {
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const country = data?.address?.country
+    const code = data?.address?.country_code?.toUpperCase?.() || ''
+    if (!country) return null
+    return {
+      name: country,
+      code: code || undefined,
+      lat,
+      lng,
+    }
+  } catch (_) {
+    return null
+  }
 }

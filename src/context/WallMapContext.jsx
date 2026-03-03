@@ -47,7 +47,6 @@ export function WallMapProvider({ children }) {
     load()
   }, [load])
 
-  // Pinpoint by location from article first; fall back to source default only when geocoding fails
   useEffect(() => {
     if (loading) return
     const pending = wallItems.filter((i) => !geocodeAttemptedRef.current.has(i.id))

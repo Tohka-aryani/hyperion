@@ -1,10 +1,19 @@
-import { useMemo, useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet'
+import { useMemo, useEffect, useCallback, useState } from 'react'
+import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents, GeoJSON } from 'react-leaflet'
 import L from 'leaflet'
 import { useMapContext } from '../context/MapContext'
 import { useTheme } from '../context/ThemeContext'
 import { useWallMap } from '../context/WallMapContext'
 import { SEVERITY_COLORS } from '../data/wallMapConfig'
+import { reverseGeocode } from '../api/geocode'
+import { fetchCountriesGeoJSON, getCountryFeature } from '../api/countriesGeoJSON'
+
+const COUNTRY_HIGHLIGHT_STYLE = {
+  fillColor: '#7c3aed',
+  fillOpacity: 0.4,
+  color: '#a78bfa',
+  weight: 2,
+}
 
 function markerColorHex(severity) {
   return SEVERITY_COLORS[severity] || SEVERITY_COLORS.T1
@@ -44,6 +53,53 @@ function CoordsListener() {
     mouseout: () => setCoords(null),
   })
   return null
+}
+
+function CountryClickLayer() {
+  const { setSelectedCountry, setCountryLoading } = useMapContext()
+  const handler = useCallback(async (e) => {
+    if (e.originalEvent?.target?.closest?.('.leaflet-marker-icon, .marker-circle')) return
+    const { lat, lng } = e.latlng
+    setCountryLoading(true)
+    try {
+      const country = await reverseGeocode(lat, lng)
+      if (country) setSelectedCountry(country)
+    } finally {
+      setCountryLoading(false)
+    }
+  }, [setSelectedCountry, setCountryLoading])
+  useMapEvents({ click: handler })
+  return null
+}
+
+function CountryHighlightLayer() {
+  const { selectedCountry } = useMapContext()
+  const [feature, setFeature] = useState(null)
+
+  useEffect(() => {
+    if (!selectedCountry) {
+      setFeature(null)
+      return
+    }
+    let cancelled = false
+    fetchCountriesGeoJSON().then((geoJson) => {
+      if (cancelled || !geoJson) return
+      const f = getCountryFeature(geoJson, selectedCountry.name, selectedCountry.code)
+      if (!cancelled) setFeature(f || null)
+    })
+    return () => { cancelled = true }
+  }, [selectedCountry])
+
+  if (!feature) return null
+
+  const data = { type: 'FeatureCollection', features: [feature] }
+  return (
+    <GeoJSON
+      key={`${selectedCountry?.code ?? ''}-${selectedCountry?.name ?? ''}`}
+      data={data}
+      style={COUNTRY_HIGHLIGHT_STYLE}
+    />
+  )
 }
 
 function ThemeTileLayer() {
@@ -103,7 +159,9 @@ export default function WorldMap() {
       <MapReady />
       <ThemeTileLayer />
       <WallNewsMarkers />
+      <CountryHighlightLayer />
       <CoordsListener />
+      <CountryClickLayer />
     </MapContainer>
   )
 }
